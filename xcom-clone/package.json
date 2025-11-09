@@ -1,0 +1,32 @@
+{
+  "name": "xcom-clone",
+  "version": "1.0.0",
+  "description": "A 3D grid-based XCOM clone.",
+  "main": "src/app.ts",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/app.js",
+    "dev": "ts-node src/app.ts"
+  },
+  "dependencies": {
+    "readline": "^1.3.0",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^16.11.7"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/xcom-clone.git"
+  },
+  "keywords": [
+    "xcom",
+    "game",
+    "typescript",
+    "3d",
+    "grid"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
