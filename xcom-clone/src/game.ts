@@ -1,8 +1,9 @@
 import { zombies, player, grid, width, height, depth } from './world';
 import { astar, getMoveCost, isWalkableFloor, isWalkableWall } from './pathfinding';
 import { FloorType, WallType } from './core/grid';
-import { getVisibleObjects, getHeardObjects } from './core/awareness';
 import { renderState } from './renderer';
+import { getVisibleObjects, getHeardObjects } from './core/awareness';
+import type { Zombie } from './world';
 
 export function parseDirection(numKey: string): {x: number, y: number, z: number} | null {
   switch (numKey) {
@@ -21,28 +22,55 @@ export function parseDirection(numKey: string): {x: number, y: number, z: number
   }
 }
 
-export function startPlayerMovement(playerObj: typeof player, direction: {x: number, y: number, z: number} | null, gridObj: typeof grid) {
-  if (!playerObj) return;
-  if (direction) {
-    const dx = playerObj.x + direction.x;
-    const dy = playerObj.y + direction.y;
-    const dz = playerObj.z + direction.z;
-
-    if (gridObj.isValidMove(dx, dy, dz)) {
-      // Calculate the move cost using the same algorithm as zombies
-      let moveCost = getMoveCost(playerObj as any, { x: dx, y: dy, z: dz });
-
-      if (playerObj.moveProgress < moveCost) {
-        playerObj.moveProgress += moveCost;
-      } else {
-        playerObj.x = dx; playerObj.y = dy; playerObj.z = dz;
-        playerObj.moveProgress -= moveCost;
-        renderState(zombies, playerObj, playerObj.z, `Moved to (${dx},${dy},${dz})`);
-      }
-    } else {
-      renderState(zombies, playerObj, playerObj.z, "Invalid move.");
-    }
+export function moveEntity(entity: typeof player | Zombie, direction: {x: number, y: number, z: number}, gridObj: typeof grid): boolean {
+  if (!entity) {
+    throw new Error("Entity cannot be null");
   }
+
+  const dx = entity.x + direction.x;
+  const dy = entity.y + direction.y;
+  const dz = entity.z + direction.z;
+
+  if (!gridObj.isValidMove(dx, dy, dz)) {
+    return false;
+  }
+
+  const destCell = gridObj.getCell(dx, dy, dz);
+  if (!isWalkableFloor(destCell.floor) || !isWalkableWall(destCell.wall)) {
+    return false;
+  }
+
+  const moveCost = getMoveCost(entity, { x: dx, y: dy, z: dz });
+  if (entity.moveProgress >= moveCost) {
+    entity.x = dx;
+    entity.y = dy;
+    entity.z = dz;
+    entity.moveProgress -= moveCost;
+    return true;
+  } else {
+    entity.moveProgress = Math.min(entity.moveProgress + entity.baseSpeed, entity.baseSpeed); // Cap movement progress
+    return false;
+  }
+}
+
+export function startPlayerMovement(playerObj: typeof player, direction: {x: number, y: number, z: number} | null, gridObj: typeof grid) {
+  if (!playerObj || !direction) return;
+
+  const moved = moveEntity(playerObj, direction, gridObj);
+  if (moved) {
+    renderState(zombies, playerObj, playerObj.z, `Moved to (${playerObj.x},${playerObj.y},${playerObj.z}) | Move Progress: ${playerObj.moveProgress.toFixed(2)}`);
+    tickGame(1, playerObj.z); // Trigger a tick after movement
+  } else {
+    renderState(zombies, playerObj, playerObj.z, `Invalid move or not enough movement points. Move Progress: ${playerObj.moveProgress.toFixed(2)}`);
+  }
+}
+
+function isWeaponInRange(attacker: Zombie, target: {x: number, y: number, z: number}): boolean {
+  const dx = target.x - attacker.x;
+  const dy = target.y - attacker.y;
+  const dz = target.z - attacker.z;
+  const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+  return distance <= attacker.weapon.range;
 }
 
 export function tickGame(ticksPerStep: number, currentZLevel: number) {
@@ -50,12 +78,22 @@ export function tickGame(ticksPerStep: number, currentZLevel: number) {
     for (const zombie of zombies) {
       zombie.recalculated = false;
       zombie.soundLevel = 0;
-      // Decay player-hearing memory
       if (zombie.playerHeardAt) {
         zombie.playerHeardAt.ticks--;
         if (zombie.playerHeardAt.ticks <= 0) zombie.playerHeardAt = null;
       }
+
+      // Check if zombie is in range to attack the player
+      if (player && isWeaponInRange(zombie, player)) {
+        zombie.moveProgress = -5; // Attack sets moveProgress to -5
+        renderState(zombies, player, currentZLevel, `Zombie at (${zombie.x},${zombie.y},${zombie.z}) attacks the player!`);
+        continue; // Skip movement if attacking
+      }
+
+      // Cap zombie movement progress
+      //zombie.moveProgress = Math.min(zombie.moveProgress, zombie.baseSpeed);
     }
+
     // Awareness and intent selection
     for (const zombie of zombies) {
       const seen = getVisibleObjects(zombie, grid, zombies, player);

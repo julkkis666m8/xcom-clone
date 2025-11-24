@@ -22,11 +22,11 @@ for (let z = 0; z < world_1.depth; z++) {
 let currentZLevel = 0;
 let ticksPerStep = 1;
 const rl = readline_1.default.createInterface({ input: process.stdin, output: process.stdout });
-// Set up raw mode for immediate keypress handling
+// Ensure raw mode is set correctly
 if (process.stdin.isTTY) {
     process.stdin.setRawMode(true);
+    process.stdin.resume();
 }
-process.stdin.resume();
 function handleKeypress(chunk) {
     const key = chunk.toString();
     if (key === '\u0003') { // Ctrl+C
@@ -60,6 +60,16 @@ function handleKeypress(chunk) {
     }
     else if (key === '\r' || key === '\n') {
         (0, game_1.tickGame)(ticksPerStep, currentZLevel);
+    }
+    else if (key === 'å') {
+        const direction = { x: 0, y: 0, z: 1 }; // Climb up
+        if (world_1.player)
+            (0, game_1.startPlayerMovement)(world_1.player, direction, world_1.grid);
+    }
+    else if (key === 'ä') {
+        const direction = { x: 0, y: 0, z: -1 }; // Climb down
+        if (world_1.player)
+            (0, game_1.startPlayerMovement)(world_1.player, direction, world_1.grid);
     }
     else if ('1' <= key && key <= '9') {
         const direction = (0, game_1.parseDirection)(key);

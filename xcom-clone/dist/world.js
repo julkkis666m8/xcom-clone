@@ -1,7 +1,7 @@
 "use strict";
 var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.player = exports.zombies = exports.grid = exports.depth = exports.width = exports.height = exports.charMap = exports.asciiMaps = exports.roofMap = exports.baseMap = void 0;
+exports.player = exports.zombies = exports.isWeaponInRange = exports.grid = exports.depth = exports.width = exports.height = exports.charMap = exports.asciiMaps = exports.roofMap = exports.baseMap = void 0;
 const grid_1 = require("./core/grid");
 // Base Z=0 map
 exports.baseMap = [
@@ -38,6 +38,20 @@ exports.height = exports.asciiMaps[0].length;
 exports.width = exports.asciiMaps[0][0].length;
 exports.depth = exports.asciiMaps.length;
 exports.grid = new grid_1.Grid(exports.width, exports.height, exports.depth);
+function isWeaponInRange(attacker, target) {
+    if (!attacker) {
+        throw new Error("Attacker cannot be null");
+    }
+    const dx = target.x - attacker.x;
+    const dy = target.y - attacker.y;
+    const dz = target.z - attacker.z;
+    const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    if ('weapon' in attacker) {
+        return distance <= attacker.weapon.range;
+    }
+    return false; // Default to false if attacker has no weapon
+}
+exports.isWeaponInRange = isWeaponInRange;
 exports.zombies = [];
 exports.player = null;
 // Populate grid and entities
@@ -63,11 +77,12 @@ for (let z = 0; z < exports.depth; z++) {
                         path: null,
                         pathIndex: 0,
                         state: 'idle',
+                        weapon: { range: 1 }, // Give zombies a default weapon
                     });
                 if (char === 'P')
                     exports.player = {
                         x, y, z,
-                        baseSpeed: 1,
+                        baseSpeed: 2,
                         health: 1,
                         moveProgress: 0,
                         path: null,

@@ -1,5 +1,5 @@
 import { Cell, WallType, FloorType } from "./grid";
-import type { Zombie } from "../main";
+import type { Zombie } from "../world";
 
 export const VISION_RADIUS = 8;
 export const HEARING_RADIUS = 10;

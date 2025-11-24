@@ -40,6 +40,10 @@ export const width = asciiMaps[0][0].length;
 export const depth = asciiMaps.length;
 export const grid = new Grid(width, height, depth);
 
+export interface Weapon {
+  range: number;
+}
+
 export interface Zombie {
   x: number;
   y: number;
@@ -56,6 +60,7 @@ export interface Zombie {
   virtualTarget?: {x: number, y: number, z: number} | null;
   soundLevel?: number; // 0 = silent, 1 = groaning, 2 = running
   playerHeardAt?: {x: number, y: number, z: number, ticks: number} | null;
+  weapon: Weapon; // Add weapon to Zombie
 }
 
 export interface Player {
@@ -68,6 +73,23 @@ export interface Player {
   path: {x: number, y: number, z: number, cost: number}[] | null;
   pathIndex: number;
   state: 'idle' | 'moving' | 'roaming' | 'enraged';
+}
+
+export function isWeaponInRange(attacker: Zombie | typeof player, target: {x: number, y: number, z: number}): boolean {
+  if (!attacker) {
+    throw new Error("Attacker cannot be null");
+  }
+
+  const dx = target.x - attacker.x;
+  const dy = target.y - attacker.y;
+  const dz = target.z - attacker.z;
+  const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+  if ('weapon' in attacker) {
+    return distance <= attacker.weapon.range;
+  }
+
+  return false; // Default to false if attacker has no weapon
 }
 
 export const zombies: Zombie[] = [];
@@ -95,10 +117,11 @@ for (let z = 0; z < depth; z++) {
           path: null,
           pathIndex: 0,
           state: 'idle',
+          weapon: { range: 1 }, // Give zombies a default weapon
         } as Zombie);
         if (char === 'P') player = {
           x, y, z,
-          baseSpeed: 1,
+          baseSpeed: 2,
           health: 1,
           moveProgress: 0,
           path: null,

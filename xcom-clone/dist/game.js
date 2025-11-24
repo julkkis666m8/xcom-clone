@@ -1,11 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.tickGame = exports.startPlayerMovement = exports.parseDirection = void 0;
+exports.tickGame = exports.startPlayerMovement = exports.moveEntity = exports.parseDirection = void 0;
 const world_1 = require("./world");
 const pathfinding_1 = require("./pathfinding");
 const grid_1 = require("./core/grid");
-const awareness_1 = require("./core/awareness");
 const renderer_1 = require("./renderer");
+const awareness_1 = require("./core/awareness");
 function parseDirection(numKey) {
     switch (numKey) {
         case '1': return { x: -1, y: 1, z: 0 };
@@ -23,45 +23,73 @@ function parseDirection(numKey) {
     }
 }
 exports.parseDirection = parseDirection;
+function moveEntity(entity, direction, gridObj) {
+    if (!entity) {
+        throw new Error("Entity cannot be null");
+    }
+    const dx = entity.x + direction.x;
+    const dy = entity.y + direction.y;
+    const dz = entity.z + direction.z;
+    if (!gridObj.isValidMove(dx, dy, dz)) {
+        return false;
+    }
+    const destCell = gridObj.getCell(dx, dy, dz);
+    if (!(0, pathfinding_1.isWalkableFloor)(destCell.floor) || !(0, pathfinding_1.isWalkableWall)(destCell.wall)) {
+        return false;
+    }
+    const moveCost = (0, pathfinding_1.getMoveCost)(entity, { x: dx, y: dy, z: dz });
+    if (entity.moveProgress >= moveCost) {
+        entity.x = dx;
+        entity.y = dy;
+        entity.z = dz;
+        entity.moveProgress -= moveCost;
+        return true;
+    }
+    else {
+        entity.moveProgress = Math.min(entity.moveProgress + entity.baseSpeed, entity.baseSpeed); // Cap movement progress
+        return false;
+    }
+}
+exports.moveEntity = moveEntity;
 function startPlayerMovement(playerObj, direction, gridObj) {
-    if (!playerObj)
+    if (!playerObj || !direction)
         return;
-    if (direction) {
-        const dx = playerObj.x + direction.x;
-        const dy = playerObj.y + direction.y;
-        const dz = playerObj.z + direction.z;
-        if (gridObj.isValidMove(dx, dy, dz)) {
-            // Calculate the move cost using the same algorithm as zombies
-            let moveCost = (0, pathfinding_1.getMoveCost)(playerObj, { x: dx, y: dy, z: dz });
-            if (playerObj.moveProgress < moveCost) {
-                playerObj.moveProgress += moveCost;
-            }
-            else {
-                playerObj.x = dx;
-                playerObj.y = dy;
-                playerObj.z = dz;
-                playerObj.moveProgress -= moveCost;
-                (0, renderer_1.renderState)(world_1.zombies, playerObj, playerObj.z, `Moved to (${dx},${dy},${dz})`);
-            }
-        }
-        else {
-            (0, renderer_1.renderState)(world_1.zombies, playerObj, playerObj.z, "Invalid move.");
-        }
+    const moved = moveEntity(playerObj, direction, gridObj);
+    if (moved) {
+        (0, renderer_1.renderState)(world_1.zombies, playerObj, playerObj.z, `Moved to (${playerObj.x},${playerObj.y},${playerObj.z}) | Move Progress: ${playerObj.moveProgress.toFixed(2)}`);
+        tickGame(1, playerObj.z); // Trigger a tick after movement
+    }
+    else {
+        (0, renderer_1.renderState)(world_1.zombies, playerObj, playerObj.z, `Invalid move or not enough movement points. Move Progress: ${playerObj.moveProgress.toFixed(2)}`);
     }
 }
 exports.startPlayerMovement = startPlayerMovement;
+function isWeaponInRange(attacker, target) {
+    const dx = target.x - attacker.x;
+    const dy = target.y - attacker.y;
+    const dz = target.z - attacker.z;
+    const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    return distance <= attacker.weapon.range;
+}
 function tickGame(ticksPerStep, currentZLevel) {
     var _a, _b, _c, _d, _e;
     for (let t = 0; t < ticksPerStep; t++) {
         for (const zombie of world_1.zombies) {
             zombie.recalculated = false;
             zombie.soundLevel = 0;
-            // Decay player-hearing memory
             if (zombie.playerHeardAt) {
                 zombie.playerHeardAt.ticks--;
                 if (zombie.playerHeardAt.ticks <= 0)
                     zombie.playerHeardAt = null;
             }
+            // Check if zombie is in range to attack the player
+            if (world_1.player && isWeaponInRange(zombie, world_1.player)) {
+                zombie.moveProgress = -5; // Attack sets moveProgress to -5
+                (0, renderer_1.renderState)(world_1.zombies, world_1.player, currentZLevel, `Zombie at (${zombie.x},${zombie.y},${zombie.z}) attacks the player!`);
+                continue; // Skip movement if attacking
+            }
+            // Cap zombie movement progress
+            //zombie.moveProgress = Math.min(zombie.moveProgress, zombie.baseSpeed);
         }
         // Awareness and intent selection
         for (const zombie of world_1.zombies) {

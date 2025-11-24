@@ -20,11 +20,11 @@ let currentZLevel = 0;
 let ticksPerStep = 1;
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
-// Set up raw mode for immediate keypress handling
+// Ensure raw mode is set correctly
 if (process.stdin.isTTY) {
   process.stdin.setRawMode(true);
+  process.stdin.resume();
 }
-process.stdin.resume();
 
 function handleKeypress(chunk: Buffer) {
   const key = chunk.toString();
@@ -52,6 +52,12 @@ function handleKeypress(chunk: Buffer) {
     }
   } else if (key === '\r' || key === '\n') {
     tickGame(ticksPerStep, currentZLevel);
+  } else if (key === 'å') {
+    const direction = { x: 0, y: 0, z: 1 }; // Climb up
+    if (player) startPlayerMovement(player, direction, grid);
+  } else if (key === 'ä') {
+    const direction = { x: 0, y: 0, z: -1 }; // Climb down
+    if (player) startPlayerMovement(player, direction, grid);
   } else if ('1' <= key && key <= '9') {
     const direction = parseDirection(key);
     if (player) {
