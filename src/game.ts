@@ -7,6 +7,18 @@ import type { Zombie, Player } from './world';
 
 export type Position = { x: number; y: number; z: number };
 
+let warningGiven = false;
+let warningKeyPress: string | null = null;
+
+function getWarningKey(direction: Position): string {
+  return `${direction.x},${direction.y},${direction.z}`;
+}
+
+function clearWarningState(): void {
+  warningGiven = false;
+  warningKeyPress = null;
+}
+
 export function parseDirection(numKey: string): Position | null {
   switch (numKey) {
     case '1': return { x: -1, y: 1, z: 0 };
@@ -34,17 +46,20 @@ export function moveEntity(entity: Position & { moveProgress: number; baseSpeed?
   const destCell = gridObj.getCell(dx, dy, dz);
   if (!destCell || !isWalkableFloor(destCell.floor) || !isWalkableWall(destCell.wall)) return false;
 
+  const occupiedByZombie = worldZombies.some(zombie => zombie.x === dx && zombie.y === dy && zombie.z === dz);
   const moveCost = getMoveCost(entity, { x: dx, y: dy, z: dz });
-  if (entity.moveProgress >= moveCost) {
+  const effectiveCost = moveCost;
+
+  if (entity.moveProgress >= effectiveCost) {
     entity.x = dx;
     entity.y = dy;
     entity.z = dz;
-    entity.moveProgress -= moveCost;
+    entity.moveProgress -= effectiveCost;
     return true;
   }
 
   if (typeof entity.baseSpeed === 'number') {
-    entity.moveProgress = Math.min(entity.moveProgress + entity.baseSpeed, entity.baseSpeed);
+    entity.moveProgress = Math.min(entity.moveProgress + entity.baseSpeed, entity.baseSpeed * 2);
   }
   return false;
 }
@@ -52,13 +67,42 @@ export function moveEntity(entity: Position & { moveProgress: number; baseSpeed?
 export function startPlayerMovement(player: Player | null, direction: Position | null, gridObj: Grid) {
   if (!player || !direction) return;
 
-  const moved = moveEntity(player, direction, gridObj);
-  if (moved) {
-    renderState(worldZombies, player, player.z, `Moved to (${player.x},${player.y},${player.z}) | Move Progress: ${player.moveProgress.toFixed(2)}`);
-    tickGame(1, player.z);
-  } else {
-    renderState(worldZombies, player, player.z, `Invalid move or not enough movement points. Move Progress: ${player.moveProgress.toFixed(2)}`);
+  const currentWarningKey = getWarningKey(direction);
+  if (warningGiven && warningKeyPress !== currentWarningKey) {
+    clearWarningState();
   }
+
+  const intendedX = player.x + direction.x;
+  const intendedY = player.y + direction.y;
+  const intendedZ = player.z + direction.z;
+
+  if (!gridObj.isValidMove(intendedX, intendedY, intendedZ)) return;
+
+  const destination = gridObj.getCell(intendedX, intendedY, intendedZ);
+  if (!destination || !isWalkableFloor(destination.floor) || !isWalkableWall(destination.wall)) return;
+
+  const occupiedByZombie = worldZombies.some(zombie => zombie.x === intendedX && zombie.y === intendedY && zombie.z === intendedZ);
+  const moveCost = getMoveCost(player, { x: intendedX, y: intendedY, z: intendedZ });
+
+  if (occupiedByZombie) {
+    if (!warningGiven || warningKeyPress !== currentWarningKey) {
+      warningGiven = true;
+      warningKeyPress = currentWarningKey;
+      renderState(worldZombies, player, player.z, `Warning: zombie at (${intendedX}, ${intendedY}, ${intendedZ}) — moving through costs ${moveCost.toFixed(2)} move points.`);
+      return;
+    }
+  } else {
+    clearWarningState();
+  }
+
+  if (player.moveProgress < moveCost) return;
+
+  const moved = moveEntity(player, direction, gridObj);
+  if (!moved) return;
+
+  clearWarningState();
+  renderState(worldZombies, player, player.z, `Moved to (${player.x},${player.y},${player.z}) | Move Progress: ${player.moveProgress.toFixed(2)}`);
+  tickGame(1, player.z);
 }
 
 function isWeaponInRange(attacker: Zombie, target: Position): boolean {
@@ -71,6 +115,10 @@ function isWeaponInRange(attacker: Zombie, target: Position): boolean {
 
 export function tickGame(ticksPerStep: number, currentZLevel: number) {
   for (let t = 0; t < ticksPerStep; t++) {
+    if (worldPlayer) {
+      worldPlayer.moveProgress = Math.min(worldPlayer.moveProgress + worldPlayer.baseSpeed, worldPlayer.baseSpeed * 2);
+    }
+
     for (const zombie of worldZombies) {
       zombie.recalculated = false;
       zombie.soundLevel = 0;

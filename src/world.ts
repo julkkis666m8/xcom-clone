@@ -123,7 +123,7 @@ for (let z = 0; z < depth; z++) {
           x, y, z,
           baseSpeed: 2,
           health: 1,
-          moveProgress: 0,
+          moveProgress: 2,
           path: null,
           pathIndex: 0,
           state: 'idle',
