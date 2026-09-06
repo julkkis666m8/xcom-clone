@@ -1,19 +1,33 @@
 export class Unit {
+    x: number;
+    y: number;
+    z: number;
+    type: string;
     health: number;
     position: { x: number; y: number; z: number };
-    name: string;
 
-    constructor(name: string, health: number, position: { x: number; y: number; z: number }) {
-        this.name = name;
+    constructor(x: number, y: number, z: number, type: string, health: number = 100) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.type = type;
         this.health = health;
-        this.position = position;
+        this.position = { x, y, z };
     }
 
-    move(newPosition: { x: number; y: number; z: number }) {
-        this.position = newPosition;
+    move(x: number, y: number, z: number, grid?: { isValidMove: (x: number, y: number, z: number) => boolean }): boolean {
+        if (grid && !grid.isValidMove(x, y, z)) {
+            return false;
+        }
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.position = { x, y, z };
+        return true;
     }
 
     attack(target: Unit) {
         // Implement attack logic here
+        void target;
     }
 }

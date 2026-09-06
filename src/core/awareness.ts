@@ -1,5 +1,5 @@
-import { Cell, WallType, FloorType } from "./grid";
-import type { Zombie } from "../world";
+import { Cell, WallType, FloorType } from './grid';
+import type { Zombie } from '../world';
 
 export const VISION_RADIUS = 8;
 export const HEARING_RADIUS = 10;
@@ -9,8 +9,6 @@ export const HEARING_THRESHOLD = 0.1;
 export function getTileTransparency(cell: Cell, hasNpc: boolean): number {
   let t = 1.0;
   if (cell.wall === WallType.Wall) t *= 0.0;
-  else if (cell.floor === FloorType.Air) t *= 0.9;
-  else t *= 1.0;
   if (hasNpc) t *= 0.8;
   return t;
 }
@@ -18,34 +16,43 @@ export function getTileTransparency(cell: Cell, hasNpc: boolean): number {
 export function getTileHearing(cell: Cell, hasNpc: boolean): number {
   let t = 1.0;
   if (cell.wall === WallType.Wall) t *= 0.2;
-  else if (cell.floor === FloorType.Air) t *= 0.98;
-  else t *= 1.0;
   if (hasNpc) t *= 0.9;
   return t;
 }
 
 export function bresenhamLine(x0: number, y0: number, x1: number, y1: number): [number, number][] {
   const points: [number, number][] = [];
-  let dx = Math.abs(x1 - x0), dy = Math.abs(y1 - y0);
-  let sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+  let dx = Math.abs(x1 - x0);
+  let dy = Math.abs(y1 - y0);
+  let sx = x0 < x1 ? 1 : -1;
+  let sy = y0 < y1 ? 1 : -1;
   let err = dx - dy;
-  let x = x0, y = y0;
+  let x = x0;
+  let y = y0;
+
   while (true) {
     points.push([x, y]);
     if (x === x1 && y === y1) break;
-    let e2 = 2 * err;
-    if (e2 > -dy) { err -= dy; x += sx; }
-    if (e2 < dx) { err += dx; y += sy; }
+    const e2 = 2 * err;
+    if (e2 > -dy) {
+      err -= dy;
+      x += sx;
+    }
+    if (e2 < dx) {
+      err += dx;
+      y += sy;
+    }
   }
+
   return points;
 }
 
-// These functions require grid, zombies, player to be passed in
-export function getVisibleObjects(zombie: Zombie, grid: any, zombies: Zombie[], player: {x: number, y: number, z: number} | null): Set<string> {
+export function getVisibleObjects(zombie: Zombie, grid: any, zombies: Zombie[], player: { x: number; y: number; z: number } | null): Set<string> {
   const visible = new Set<string>();
   const x = zombie.x;
   const y = zombie.y;
   const z = zombie.z;
+
   if (player) {
     const lineToPlayer = bresenhamLine(x, y, player.x, player.y);
     let canSeePlayer = true;
@@ -55,6 +62,10 @@ export function getVisibleObjects(zombie: Zombie, grid: any, zombies: Zombie[], 
         break;
       }
       const cell = grid.getCell(lx, ly, z);
+      if (!cell) {
+        canSeePlayer = false;
+        break;
+      }
       const hasNpc = zombies.some(zb => zb.x === lx && zb.y === ly && zb.z === z);
       if (getTileTransparency(cell, hasNpc) < VISION_THRESHOLD) {
         canSeePlayer = false;
@@ -63,6 +74,7 @@ export function getVisibleObjects(zombie: Zombie, grid: any, zombies: Zombie[], 
     }
     if (canSeePlayer) visible.add('player');
   }
+
   for (let dx = -VISION_RADIUS; dx <= VISION_RADIUS; dx++) {
     for (let dy = -VISION_RADIUS; dy <= VISION_RADIUS; dy++) {
       if (dx === 0 && dy === 0) continue;
@@ -70,6 +82,7 @@ export function getVisibleObjects(zombie: Zombie, grid: any, zombies: Zombie[], 
       const ny = y + dy;
       if (!grid.isValidMove(nx, ny, z)) continue;
       const cell = grid.getCell(nx, ny, z);
+      if (!cell) continue;
       const hasNpc = zombies.some(zb => zb.x === nx && zb.y === ny && zb.z === z);
       if (getTileTransparency(cell, hasNpc) >= VISION_THRESHOLD) {
         if (zombies.some(zb => zb.x === nx && zb.y === ny && zb.z === z && (zb.x !== x || zb.y !== y))) visible.add('zombie');
@@ -78,14 +91,16 @@ export function getVisibleObjects(zombie: Zombie, grid: any, zombies: Zombie[], 
       }
     }
   }
+
   return visible;
 }
 
-export function getHeardObjects(zombie: Zombie, grid: any, zombies: typeof zombies, player: {x: number, y: number, z: number} | null): Set<string> {
+export function getHeardObjects(zombie: Zombie, grid: any, zombies: Zombie[], player: { x: number; y: number; z: number } | null): Set<string> {
   const heard = new Set<string>();
   const x = zombie.x;
   const y = zombie.y;
   const z = zombie.z;
+
   for (let dx = -HEARING_RADIUS; dx <= HEARING_RADIUS; dx++) {
     for (let dy = -HEARING_RADIUS; dy <= HEARING_RADIUS; dy++) {
       if (dx === 0 && dy === 0) continue;
@@ -93,6 +108,7 @@ export function getHeardObjects(zombie: Zombie, grid: any, zombies: typeof zombi
       const ny = y + dy;
       if (!grid.isValidMove(nx, ny, z)) continue;
       const cell = grid.getCell(nx, ny, z);
+      if (!cell) continue;
       const hasNpc = zombies.some(zb => zb.x === nx && zb.y === ny && zb.z === z);
       if (getTileHearing(cell, hasNpc) >= HEARING_THRESHOLD) {
         if (player && player.x === nx && player.y === ny && player.z === z) heard.add('player');
@@ -102,5 +118,6 @@ export function getHeardObjects(zombie: Zombie, grid: any, zombies: typeof zombi
       }
     }
   }
+
   return heard;
 }

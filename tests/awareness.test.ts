@@ -5,6 +5,7 @@ import {
   getVisibleObjects,
   getHeardObjects 
 } from '../src/core/awareness';
+import { describe, it, expect } from '@jest/globals';
 import { Grid, Cell, WallType, FloorType } from '../src/core/grid';
 
 describe('Awareness System', () => {
@@ -49,45 +50,45 @@ describe('Awareness System', () => {
   });
 
   describe('Visibility Functions', () => {
-    it('should handle empty grid with no player: {x: number, y: number, z: number} | null', () => {
+    it('should handle empty grid with no player present', () => {
       const zombie = { x: 5, y: 5, z: 0 };
       const grid = new Grid(10, 10, 3);
-      const zombies: typeof zombies = [];
-      const player: {x: number, y: number, z: number} | null = null;
-      
-      const visible = getVisibleObjects(zombie, grid, zombies: typeof zombies, player: {x: number, y: number, z: number} | null);
+      const zombies: Array<{ x: number; y: number; z: number }> = [];
+      const player: { x: number; y: number; z: number } | null = null;
+
+      const visible = getVisibleObjects(zombie, grid, zombies, player);
       expect(visible).toBeDefined();
     });
-    
-    it('should handle visibility with player: {x: number, y: number, z: number} | null present', () => {
+
+    it('should handle visibility with player present', () => {
       const zombie = { x: 5, y: 5, z: 0 };
       const grid = new Grid(10, 10, 3);
-      const zombies: typeof zombies = [];
-      const player: {x: number, y: number, z: number} | null = { x: 8, y: 8, z: 0 };
-      
-      const visible = getVisibleObjects(zombie, grid, zombies: typeof zombies, player: {x: number, y: number, z: number} | null);
+      const zombies: Array<{ x: number; y: number; z: number }> = [];
+      const player: { x: number; y: number; z: number } | null = { x: 8, y: 8, z: 0 };
+
+      const visible = getVisibleObjects(zombie, grid, zombies, player);
       expect(visible).toBeDefined();
     });
   });
 
   describe('Hearing Functions', () => {
-    it('should handle empty grid with no player: {x: number, y: number, z: number} | null', () => {
+    it('should handle empty grid with no player present', () => {
       const zombie = { x: 5, y: 5, z: 0 };
       const grid = new Grid(10, 10, 3);
-      const zombies: typeof zombies = [];
-      const player: {x: number, y: number, z: number} | null = null;
-      
-      const heard = getHeardObjects(zombie, grid, zombies: typeof zombies, player: {x: number, y: number, z: number} | null);
+      const zombies: Array<{ x: number; y: number; z: number }> = [];
+      const player: { x: number; y: number; z: number } | null = null;
+
+      const heard = getHeardObjects(zombie, grid, zombies, player);
       expect(heard).toBeDefined();
     });
-    
-    it('should handle hearing with player: {x: number, y: number, z: number} | null present', () => {
+
+    it('should handle hearing with player present', () => {
       const zombie = { x: 5, y: 5, z: 0 };
       const grid = new Grid(10, 10, 3);
-      const zombies: typeof zombies = [];
-      const player: {x: number, y: number, z: number} | null = { x: 8, y: 8, z: 0 };
-      
-      const heard = getHeardObjects(zombie, grid, zombies: typeof zombies, player: {x: number, y: number, z: number} | null);
+      const zombies: Array<{ x: number; y: number; z: number }> = [];
+      const player: { x: number; y: number; z: number } | null = { x: 8, y: 8, z: 0 };
+
+      const heard = getHeardObjects(zombie, grid, zombies, player);
       expect(heard).toBeDefined();
     });
   });
