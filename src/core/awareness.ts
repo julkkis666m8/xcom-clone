@@ -41,7 +41,7 @@ export function bresenhamLine(x0: number, y0: number, x1: number, y1: number): [
 }
 
 // These functions require grid, zombies, player to be passed in
-export function getVisibleObjects(zombie: Zombie, grid: any, zombies: Zombie[], player: {x: number, y: number, z: number} | null): Set<string> {
+export function getVisibleObjects(zombie: Zombie, grid: any, zombies: typeof zombies, player: {x: number, y: number, z: number} | null): Set<string> {
   const visible = new Set<string>();
   const x = zombie.x;
   const y = zombie.y;
@@ -81,7 +81,7 @@ export function getVisibleObjects(zombie: Zombie, grid: any, zombies: Zombie[], 
   return visible;
 }
 
-export function getHeardObjects(zombie: Zombie, grid: any, zombies: Zombie[], player: {x: number, y: number, z: number} | null): Set<string> {
+export function getHeardObjects(zombie: Zombie, grid: any, zombies: typeof zombies, player: {x: number, y: number, z: number} | null): Set<string> {
   const heard = new Set<string>();
   const x = zombie.x;
   const y = zombie.y;

@@ -1,4 +1,4 @@
-import { zombies, player, grid, width, height, depth } from './world';
+import { zombies: typeof zombies, player: {x: number, y: number, z: number} | null, grid, width, height, depth } from './world';
 import { astar, getMoveCost, isWalkableFloor, isWalkableWall } from './pathfinding';
 import { FloorType, WallType } from './core/grid';
 import { renderState } from './renderer';
@@ -22,7 +22,7 @@ export function parseDirection(numKey: string): {x: number, y: number, z: number
   }
 }
 
-export function moveEntity(entity: typeof player | Zombie, direction: {x: number, y: number, z: number}, gridObj: typeof grid): boolean {
+export function moveEntity(entity: typeof player: {x: number, y: number, z: number} | null | Zombie, direction: {x: number, y: number, z: number}, gridObj: typeof grid): boolean {
   if (!entity) {
     throw new Error("Entity cannot be null");
   }
@@ -53,15 +53,15 @@ export function moveEntity(entity: typeof player | Zombie, direction: {x: number
   }
 }
 
-export function startPlayerMovement(playerObj: typeof player, direction: {x: number, y: number, z: number} | null, gridObj: typeof grid) {
-  if (!playerObj || !direction) return;
+export function startPlayerMovement(player: {x: number, y: number, z: number} | nullObj: typeof player: {x: number, y: number, z: number} | null, direction: {x: number, y: number, z: number} | null, gridObj: typeof grid) {
+  if (!player: {x: number, y: number, z: number} | nullObj || !direction) return;
 
-  const moved = moveEntity(playerObj, direction, gridObj);
+  const moved = moveEntity(player: {x: number, y: number, z: number} | nullObj, direction, gridObj);
   if (moved) {
-    renderState(zombies, playerObj, playerObj.z, `Moved to (${playerObj.x},${playerObj.y},${playerObj.z}) | Move Progress: ${playerObj.moveProgress.toFixed(2)}`);
-    tickGame(1, playerObj.z); // Trigger a tick after movement
+    renderState(zombies: typeof zombies, player: {x: number, y: number, z: number} | nullObj, player: {x: number, y: number, z: number} | nullObj.z, `Moved to (${player: {x: number, y: number, z: number} | nullObj.x},${player: {x: number, y: number, z: number} | nullObj.y},${player: {x: number, y: number, z: number} | nullObj.z}) | Move Progress: ${player: {x: number, y: number, z: number} | nullObj.moveProgress.toFixed(2)}`);
+    tickGame(1, player: {x: number, y: number, z: number} | nullObj.z); // Trigger a tick after movement
   } else {
-    renderState(zombies, playerObj, playerObj.z, `Invalid move or not enough movement points. Move Progress: ${playerObj.moveProgress.toFixed(2)}`);
+    renderState(zombies: typeof zombies, player: {x: number, y: number, z: number} | nullObj, player: {x: number, y: number, z: number} | nullObj.z, `Invalid move or not enough movement points. Move Progress: ${player: {x: number, y: number, z: number} | nullObj.moveProgress.toFixed(2)}`);
   }
 }
 
@@ -75,18 +75,18 @@ function isWeaponInRange(attacker: Zombie, target: {x: number, y: number, z: num
 
 export function tickGame(ticksPerStep: number, currentZLevel: number) {
   for (let t = 0; t < ticksPerStep; t++) {
-    for (const zombie of zombies) {
+    for (const zombie of zombies: typeof zombies) {
       zombie.recalculated = false;
       zombie.soundLevel = 0;
-      if (zombie.playerHeardAt) {
-        zombie.playerHeardAt.ticks--;
-        if (zombie.playerHeardAt.ticks <= 0) zombie.playerHeardAt = null;
+      if (zombie.player: {x: number, y: number, z: number} | nullHeardAt) {
+        zombie.player: {x: number, y: number, z: number} | nullHeardAt.ticks--;
+        if (zombie.player: {x: number, y: number, z: number} | nullHeardAt.ticks <= 0) zombie.player: {x: number, y: number, z: number} | nullHeardAt = null;
       }
 
-      // Check if zombie is in range to attack the player
-      if (player && isWeaponInRange(zombie, player)) {
+      // Check if zombie is in range to attack the player: {x: number, y: number, z: number} | null
+      if (player: {x: number, y: number, z: number} | null && isWeaponInRange(zombie, player: {x: number, y: number, z: number} | null)) {
         zombie.moveProgress = -5; // Attack sets moveProgress to -5
-        renderState(zombies, player, currentZLevel, `Zombie at (${zombie.x},${zombie.y},${zombie.z}) attacks the player!`);
+        renderState(zombies: typeof zombies, player: {x: number, y: number, z: number} | null, currentZLevel, `Zombie at (${zombie.x},${zombie.y},${zombie.z}) attacks the player: {x: number, y: number, z: number} | null!`);
         continue; // Skip movement if attacking
       }
 
@@ -95,43 +95,43 @@ export function tickGame(ticksPerStep: number, currentZLevel: number) {
     }
 
     // Awareness and intent selection
-    for (const zombie of zombies) {
-      const seen = getVisibleObjects(zombie, grid, zombies, player);
-      const heard = getHeardObjects(zombie, grid, zombies, player);
+    for (const zombie of zombies: typeof zombies) {
+      const seen = getVisibleObjects(zombie, grid, zombies: typeof zombies, player: {x: number, y: number, z: number} | null);
+      const heard = getHeardObjects(zombie, grid, zombies: typeof zombies, player: {x: number, y: number, z: number} | null);
       let newIntent: typeof zombie.intent = 'roaming';
       let newTarget: {x: number, y: number, z: number} | null = null;
-      // 1. Sees player
-      if (seen.has('player') && player) {
+      // 1. Sees player: {x: number, y: number, z: number} | null
+      if (seen.has('player: {x: number, y: number, z: number} | null') && player: {x: number, y: number, z: number} | null) {
         newIntent = 'enraged';
-        newTarget = { ...player };
-      } else if (heard.has('player') && player) {
-        // 2. Hears player: remember location
-        zombie.playerHeardAt = { x: player.x, y: player.y, z: player.z, ticks: 5 };
+        newTarget = { ...player: {x: number, y: number, z: number} | null };
+      } else if (heard.has('player: {x: number, y: number, z: number} | null') && player: {x: number, y: number, z: number} | null) {
+        // 2. Hears player: {x: number, y: number, z: number} | null: remember location
+        zombie.player: {x: number, y: number, z: number} | nullHeardAt = { x: player: {x: number, y: number, z: number} | null.x, y: player: {x: number, y: number, z: number} | null.y, z: player: {x: number, y: number, z: number} | null.z, ticks: 5 };
       }
       // 3. Sees enraged zombie
       if (!newTarget) {
-        const enragedZombies = zombies.filter(zb => zb !== zombie && zb.intent === 'enraged' && seen.has('zombie'));
+        const enragedZombies = zombies: typeof zombies.filter(zb => zb !== zombie && zb.intent === 'enraged' && seen.has('zombie'));
         if (enragedZombies.length > 0) {
           const targetZ = enragedZombies[0];
           newIntent = 'aware';
           newTarget = { x: targetZ.x, y: targetZ.y, z: targetZ.z };
         } else {
           // 4. Hears enraged zombie
-          const heardEnraged = zombies.filter(zb => zb !== zombie && zb.intent === 'enraged' && heard.has('zombie'));
+          const heardEnraged = zombies: typeof zombies.filter(zb => zb !== zombie && zb.intent === 'enraged' && heard.has('zombie'));
           if (heardEnraged.length > 0) {
             const targetZ = heardEnraged[0];
             newIntent = 'aware';
             newTarget = { x: targetZ.x, y: targetZ.y, z: targetZ.z };
           } else {
             // 5. Sees and hears an aware zombie (virtual awareness)
-            const awareZombies = zombies.filter(zb => zb !== zombie && zb.intent === 'aware' && seen.has('zombie') && heard.has('zombie') && zb.virtualTarget);
+            const awareZombies = zombies: typeof zombies.filter(zb => zb !== zombie && zb.intent === 'aware' && seen.has('zombie') && heard.has('zombie') && zb.virtualTarget);
             if (awareZombies.length > 0) {
               newIntent = 'aware';
               newTarget = awareZombies[0].virtualTarget!;
-            } else if (zombie.playerHeardAt) {
-              // 6. Roam toward last heard player
+            } else if (zombie.player: {x: number, y: number, z: number} | nullHeardAt) {
+              // 6. Roam toward last heard player: {x: number, y: number, z: number} | null
               newIntent = 'roaming';
-              newTarget = { x: zombie.playerHeardAt.x, y: zombie.playerHeardAt.y, z: zombie.playerHeardAt.z };
+              newTarget = { x: zombie.player: {x: number, y: number, z: number} | nullHeardAt.x, y: zombie.player: {x: number, y: number, z: number} | nullHeardAt.y, z: zombie.player: {x: number, y: number, z: number} | nullHeardAt.z };
             } else {
               // 7. Default: roam
               newIntent = 'roaming';
@@ -144,19 +144,19 @@ export function tickGame(ticksPerStep: number, currentZLevel: number) {
       zombie.virtualTarget = newTarget;
     }
     // Simulate tick
-    for (const zombie of zombies) {
+    for (const zombie of zombies: typeof zombies) {
       // Accumulate movement points ONCE per tick
       let speed = zombie.baseSpeed * zombie.health;
       if (zombie.state === 'roaming') speed /= 2;
       zombie.moveProgress += speed;
-      // Only pathfind if intent is 'enraged' (sees or virtually knows player)
-      if (zombie.intent === 'enraged' && player) {
+      // Only pathfind if intent is 'enraged' (sees or virtually knows player: {x: number, y: number, z: number} | null)
+      if (zombie.intent === 'enraged' && player: {x: number, y: number, z: number} | null) {
         if (zombie.state !== 'enraged') {
           zombie.state = 'enraged';
         }
         zombie.soundLevel = 2; // Running sound
         if (!zombie.path || zombie.pathIndex >= zombie.path.length) {
-          const path = astar(zombie, player);
+          const path = astar(zombie, player: {x: number, y: number, z: number} | null);
           if (path && path.length > 1) {
             zombie.path = path.slice(1);
             zombie.pathIndex = 0;
@@ -177,13 +177,13 @@ export function tickGame(ticksPerStep: number, currentZLevel: number) {
       } else if (zombie.intent === 'roaming') {
         if (zombie.state !== 'roaming') zombie.state = 'roaming';
         zombie.soundLevel = 0;
-        // Prefer to roam toward last heard player if memory exists
-        if (zombie.playerHeardAt && (!zombie.path || zombie.pathIndex >= zombie.path.length)) {
-          const path = astar(zombie, {x: zombie.playerHeardAt.x, y: zombie.playerHeardAt.y, z: zombie.playerHeardAt.z});
+        // Prefer to roam toward last heard player: {x: number, y: number, z: number} | null if memory exists
+        if (zombie.player: {x: number, y: number, z: number} | nullHeardAt && (!zombie.path || zombie.pathIndex >= zombie.path.length)) {
+          const path = astar(zombie, {x: zombie.player: {x: number, y: number, z: number} | nullHeardAt.x, y: zombie.player: {x: number, y: number, z: number} | nullHeardAt.y, z: zombie.player: {x: number, y: number, z: number} | nullHeardAt.z});
           if (path && path.length > 1) {
             zombie.path = path.slice(1);
             zombie.pathIndex = 0;
-            zombie.roamTarget = {x: zombie.playerHeardAt.x, y: zombie.playerHeardAt.y, z: zombie.playerHeardAt.z};
+            zombie.roamTarget = {x: zombie.player: {x: number, y: number, z: number} | nullHeardAt.x, y: zombie.player: {x: number, y: number, z: number} | nullHeardAt.y, z: zombie.player: {x: number, y: number, z: number} | nullHeardAt.z};
           }
         } else if (!zombie.path || zombie.pathIndex >= zombie.path.length) {
           // Roam randomly
@@ -216,7 +216,7 @@ export function tickGame(ticksPerStep: number, currentZLevel: number) {
         moved = false;
         // Determine target for path recalculation
         let target: {x: number, y: number, z: number} | undefined = undefined;
-        if (zombie.state === 'moving' && player) target = player;
+        if (zombie.state === 'moving' && player: {x: number, y: number, z: number} | null) target = player: {x: number, y: number, z: number} | null;
         if (zombie.state === 'roaming' && zombie.roamTarget) target = zombie.roamTarget;
 
         if ((zombie.state === 'moving' || zombie.state === 'roaming' || zombie.state === 'enraged') && zombie.path && zombie.pathIndex < zombie.path.length) {
@@ -234,7 +234,7 @@ export function tickGame(ticksPerStep: number, currentZLevel: number) {
                 isWalkableFloor(dest.floor) && isWalkableWall(dest.wall) &&
                 grid.isValidMove(next.x, next.y, next.z)
               ) {
-                const npcCount = zombies.filter(zb => zb.x === next.x && zb.y === next.y && zb.z === next.z).length;
+                const npcCount = zombies: typeof zombies.filter(zb => zb.x === next.x && zb.y === next.y && zb.z === next.z).length;
                 moveCost = 2 * (npcCount > 0 ? Math.pow(2, npcCount) : 1);
               } else {
                 moveCost = Infinity;
@@ -248,7 +248,7 @@ export function tickGame(ticksPerStep: number, currentZLevel: number) {
                 isWalkableFloor(dest.floor) && isWalkableWall(dest.wall) &&
                 grid.isValidMove(next.x, next.y, next.z)
               ) {
-                const npcCount = zombies.filter(zb => zb.x === next.x && zb.y === next.y && zb.z === next.z).length;
+                const npcCount = zombies: typeof zombies.filter(zb => zb.x === next.x && zb.y === next.y && zb.z === next.z).length;
                 moveCost = 2 * (npcCount > 0 ? Math.pow(2, npcCount) : 1);
               } else {
                 moveCost = Infinity;
@@ -282,7 +282,7 @@ export function tickGame(ticksPerStep: number, currentZLevel: number) {
             zombie.pathIndex++;
             moved = true;
             if (zombie.pathIndex >= zombie.path.length) {
-              // Switch to roaming after reaching the player
+              // Switch to roaming after reaching the player: {x: number, y: number, z: number} | null
               if (zombie.state === 'moving') {
                 zombie.state = 'roaming';
                 zombie.path = null;
@@ -305,5 +305,5 @@ export function tickGame(ticksPerStep: number, currentZLevel: number) {
       );
     }
   }
-  renderState(zombies, player, currentZLevel, `Ticked ${ticksPerStep} time(s)`);
+  renderState(zombies: typeof zombies, player: {x: number, y: number, z: number} | null, currentZLevel, `Ticked ${ticksPerStep} time(s)`);
 }
