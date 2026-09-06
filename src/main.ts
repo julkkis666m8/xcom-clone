@@ -1,15 +1,15 @@
 import readline from 'readline';
 import { grid, zombies, player, width, height, depth } from './world';
-import { renderState, drawMap } from './renderer';
+import { renderState } from './renderer';
 import { parseDirection, startPlayerMovement, tickGame } from './game';
 
-// Print both Z-levels for quick verification
 for (let z = 0; z < depth; z++) {
   console.log(`Z-level ${z}`);
   for (let y = 0; y < height; y++) {
     let row = '';
     for (let x = 0; x < width; x++) {
-      row += grid.getCell(x, y, z).char;
+      const cell = grid.getCell(x, y, z);
+      row += cell?.char ?? ' ';
     }
     console.log(row);
   }

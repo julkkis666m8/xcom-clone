@@ -1,4 +1,4 @@
-import { Grid, Cell, WallType, FloorType } from '../src/core/grid';
+import { Grid, Cell, WallType, FloorType } from '../src/core/grid';import { describe, it, expect } from '@jest/globals';
 
 describe('Grid', () => {
   describe('Initialization', () => {
