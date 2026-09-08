@@ -1,9 +1,10 @@
 import { Grid, FloorType, WallType } from './core/grid';
 import { renderState } from './renderer';
-import { grid, zombies as worldZombies, player as worldPlayer, width, height, depth } from './world';
+import { grid, zombies as worldZombies, player as worldPlayer, width, height, depth, bullets } from './world';
 import { getMoveCost, isWalkableFloor, isWalkableWall, astar } from './pathfinding';
 import { getVisibleObjects, getHeardObjects } from './core/awareness';
 import type { Zombie, Player } from './world';
+import { Bullet } from './core/bullet';
 
 export type Position = { x: number; y: number; z: number };
 
@@ -101,7 +102,7 @@ export function startPlayerMovement(player: Player | null, direction: Position |
   if (!moved) return;
 
   clearWarningState();
-  renderState(worldZombies, player, player.z, `Moved to (${player.x},${player.y},${player.z}) | Move Progress: ${player.moveProgress.toFixed(2)}`);
+  renderState(worldZombies, player, player.z, `Moved to (${player.x},${player.y},${player.z}) | Move Progress: ${player.moveProgress.toFixed(2)} | Zombie Detected`);
   tickGame(1, player.z);
 }
 
@@ -111,6 +112,39 @@ function isWeaponInRange(attacker: Zombie, target: Position): boolean {
   const dz = target.z - attacker.z;
   const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
   return distance <= attacker.weapon.range;
+}
+
+export function shoot(direction: Position): void {
+  if (!worldPlayer) return;
+
+  let nearestZombie: Zombie | null = null;
+  let minDistance = Infinity;
+
+  for (const zombie of worldZombies) {
+    const d = Math.sqrt(
+      Math.pow(zombie.x - worldPlayer.x, 2) +
+      Math.pow(zombie.y - worldPlayer.y, 2) +
+      Math.pow(zombie.z - worldPlayer.z, 2)
+    );
+    if (d < minDistance) {
+      minDistance = d;
+      nearestZombie = zombie;
+    }
+  }
+
+  if (nearestZombie) {
+    const targetDx = nearestZombie.x - worldPlayer.x;
+    const targetDy = nearestZombie.y - worldPlayer.y;
+    const targetDz = nearestZombie.z - worldPlayer.z;
+    const targetDist = Math.sqrt(targetDx * targetDx + targetDy * targetDy + targetDz * targetDz);
+    
+    const vx = targetDx / targetDist;
+    const vy = targetDy / targetDist;
+    const vz = targetDz / targetDist;
+
+    bullets.push(new Bullet(worldPlayer.x, worldPlayer.y, worldPlayer.z, { x: vx, y: vy, z: vz }));
+    renderState(worldZombies, worldPlayer, worldPlayer.z, `Shot at nearest zombie!`);
+  }
 }
 
 export function tickGame(ticksPerStep: number, currentZLevel: number) {
@@ -172,7 +206,6 @@ export function tickGame(ticksPerStep: number, currentZLevel: number) {
               newTarget = null;
             }
           }
-        }
       }
 
       zombie.intent = newIntent;
@@ -309,9 +342,69 @@ export function tickGame(ticksPerStep: number, currentZLevel: number) {
         }
       } while (moved && zombie.path && zombie.pathIndex < zombie.path.length && zombie.moveProgress >= (zombie.path[zombie.pathIndex]?.cost ?? 1));
     }
-  }
 
+    for (const bullet of bullets) {
+      if (bullet.active) {
+        const moved = bullet.move(grid);
+        if (!moved) continue;
+
+        const hitZombie = worldZombies.find(zombie => 
+          Math.abs(zombie.x - bullet.x) < 0.1 && 
+          Math.abs(zombie.y - bullet.y) < 0.1 && 
+          Math.abs(zombie.z - bullet.z) < 0.1
+        );
+
+        if (hitZombie) {
+          hitZombie.health -= 1;
+          hitZombie.blood = (hitZombie.blood ?? 0) + 5;
+          bullet.active = false;
+          renderState(worldZombies, worldPlayer, currentZLevel, `Bullet hit zombie at (${hitZombie.x}, ${hitZombie.y}, ${hitZombie.z})!`);
+        }
+      }
+    }
+
+    for (let i = 0; i < worldZombies.length; i++) {
+      const zombie = worldZombies[i];
+      const currentBlood = zombie.blood ?? 0;
+
+      if (currentBlood > 0) {
+        const neighbors = [
+          { x: zombie.x + 1, y: zombie.y, z: zombie.z },
+          { x: zombie.x - 1, y: zombie.y, z: zombie.z },
+          { x: zombie.x, y: zombie.y + 1, z: zombie.z },
+          { x: zombie.x, y: zombie.y - 1, z: zombie.z },
+          { x: zombie.x, y: zombie.y, z: zombie.z + 1 },
+          { x: zombie.x, y: zombie.y, z: zombie.z - 1 },
+        ];
+
+        const possibleMoves: { x: number; y: number; z: number }[] = [];
+        for (const pos of neighbors) {
+          if (grid.isLiquidTile(pos.x, pos.y, pos.z)) {
+            possibleMoves.push({ x: pos.x, y: pos.y, z: pos.z });
+          }
+        }
+
+        if (possibleMoves.length > 0) {
+          const shuffled = [...possibleMoves].sort(() => Math.random() - 0.5);
+          const randomPos = shuffled[0];
+          const destCell = grid.getCell(randomPos.x, randomPos.y, randomPos.z);
+          
+          if (destCell) {
+            if (destCell.wall === WallType.Wall) {
+              destCell.blood = Math.min(destCell.blood + 1, 1);
+            } else {
+              const amountToMove = Math.min(currentBlood, 1);
+              destCell.blood = (destCell.blood ?? 0) + amountToMove;
+              zombie.blood = (zombie.blood ?? 0) - amountToMove;
+            }
+          }
+        }
+      }
+    }
+
+  }
   renderState(worldZombies, worldPlayer, currentZLevel, `Ticked ${ticksPerStep} time(s)`);
+}
 }
 
 class Game {

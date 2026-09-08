@@ -14,6 +14,7 @@ export interface Cell {
     floor: FloorType;
     wall: WallType;
     char?: string;
+    blood: number;
 }
 
 export class Grid {
@@ -36,6 +37,7 @@ export class Grid {
                     floor: FloorType.Floor,
                     wall: WallType.Air,
                     char: ',',
+                    blood: 0,
                 }))
             )
         );
@@ -71,6 +73,7 @@ export class Grid {
                     floor: def.floor ?? FloorType.Floor,
                     wall: def.wall ?? WallType.Air,
                     char,
+                    blood: 0,
                 };
                 grid.setCell(x, y, 0, cell);
             }
@@ -85,5 +88,13 @@ export class Grid {
             return cell.floor === FloorType.StairsDown;
         }
         return cell.wall === WallType.Wall || cell.wall === WallType.StairsUp;
+    }
+
+    public isLiquidTile(x: number, y: number, z: number): boolean {
+        const cell = this.getCell(x, y, z);
+        if (!cell) return false;
+        const isLiquidFloor = cell.floor === FloorType.Floor || cell.floor === FloorType.StairsDown || cell.floor === FloorType.Air;
+        const isLiquidWall = cell.wall === WallType.Air;
+        return isLiquidFloor || isLiquidWall;
     }
 }

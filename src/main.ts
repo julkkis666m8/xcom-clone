@@ -26,6 +26,8 @@ if (process.stdin.isTTY) {
   process.stdin.resume();
 }
 
+let isShootingMode = false;
+
 function handleKeypress(chunk: Buffer) {
   const key = chunk.toString();
   if (key === '\u0003') { // Ctrl+C
@@ -58,10 +60,24 @@ function handleKeypress(chunk: Buffer) {
   } else if (key === 'ä') {
     const direction = { x: 0, y: 0, z: -1 }; // Climb down
     if (player) startPlayerMovement(player, direction, grid);
+  } else if (key === '0') {
+    isShootingMode = !isShootingMode;
+    renderState(zombies, player, currentZLevel, `Shooting Mode: ${isShootingMode ? 'ON' : 'OFF'}`);
   } else if ('1' <= key && key <= '9') {
-    const direction = parseDirection(key);
-    if (player) {
-      startPlayerMovement(player, direction, grid);
+    if (isShootingMode) {
+      const direction = parseDirection(key);
+      if (direction) {
+        // Shooting logic will be added here
+        renderState(zombies, player, currentZLevel, `Shooting towards ${JSON.stringify(direction)}`);
+      }
+      isShootingMode = false;
+    } else {
+      const direction = parseDirection(key);
+      if (direction) {
+        if (player) {
+          startPlayerMovement(player, direction, grid);
+        }
+      }
     }
   }
 }

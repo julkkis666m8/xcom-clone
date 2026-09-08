@@ -2,6 +2,9 @@
 
 This document analyzes the various AI and agent systems implemented in the XCOM clone game.
 
+## TOOLS
+When ever you need to change a file, NEVER use "write". use edit with at least 3-5 rows of "oldString" to make sure you get the correct part edited. you can also use sed instead of edit, but never use "write" unless we know the file does not exist, or needs to be edited in it's entirety. it takes for ever for you to rewrite an entire >50 line file.
+
 ## Overview
 
 The XCOM clone implements a 3D grid-based tactical game with multiple agent types that exhibit intelligent behavior. The core agents are:

@@ -1,4 +1,5 @@
 import { Grid, FloorType, WallType, Cell } from "./core/grid";
+import { Bullet } from "./core/bullet";
 
 // Base Z=0 map
 export const baseMap = [
@@ -61,6 +62,7 @@ export interface Zombie {
   soundLevel?: number; // 0 = silent, 1 = groaning, 2 = running
   playerHeardAt?: {x: number, y: number, z: number, ticks: number} | null;
   weapon: Weapon; // Add weapon to Zombie
+  blood?: number; // Added for blood system
 }
 
 export interface Player {
@@ -94,6 +96,7 @@ export function isWeaponInRange(attacker: Zombie | typeof player, target: {x: nu
 
 export const zombies: Zombie[] = [];
 export let player: Player | null = null;
+export let bullets: Bullet[] = [];
 
 // Populate grid and entities
 for (let z = 0; z < depth; z++) {
@@ -102,11 +105,12 @@ for (let z = 0; z < depth; z++) {
     for (let x = 0; x < width; x++) {
       const char = asciiMap[y][x];
       const def = charMap[char] ?? {};
-      const cell: Cell = {
-        floor: def.floor ?? FloorType.Floor,
-        wall: def.wall ?? WallType.Air,
-        char: (char === 'Z' || char === 'P') ? ',' : char,
-      };
+        const cell: Cell = {
+          floor: def.floor ?? FloorType.Floor,
+          wall: def.wall ?? WallType.Air,
+          char: (char === 'Z' || char === 'P') ? ',' : char,
+          blood: 0,
+        };
       grid.setCell(x, y, z, cell);
       if (z === 0) {
         if (char === 'Z') zombies.push({
